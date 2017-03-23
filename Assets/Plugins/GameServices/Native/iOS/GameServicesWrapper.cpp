@@ -145,110 +145,144 @@ extern "C" EXPORT void AchievementsClaimAchievement(const char* id)
     Achievements::ClaimAchievement(id);
 }
 
-extern "C" EXPORT int LeaderboardsGetLeaderboardDefinitionsCount()
-{
-    return Leaderboards::GetLeaderboardDefinitionsCount();
-}
+typedef void (* LeaderboardCallback_bridge)(const Leaderboard* leaderboardPointer, int callbackId);
 
-struct LeaderboardDefinition_bridge
+struct LeaderboardCallbackContext
 {
-    const char* id;
-    const char* platformId;
-    const char* name;
-    const char* description;
+    LeaderboardCallback_bridge callback;
+    int managedCallbackId;
 };
 
-extern "C" EXPORT LeaderboardDefinition_bridge * LeaderboardsGetLeaderboardDefinition(int index)
+static void OnLeaderboardLoaded(const Leaderboard* leaderboard, void* contextPtr)
 {
-    LeaderboardDefinition* definition = Leaderboards::GetLeaderboardDefinition(index);
-    if (!definition)
-        return NULL;
-    LeaderboardDefinition_bridge* bridge = new LeaderboardDefinition_bridge();
-    bridge->id = definition->id.c_str();
-    bridge->platformId = definition->id.c_str();
-    bridge->name = definition->name.c_str();
-    bridge->description = definition->description.c_str();
-    return bridge;
+    LeaderboardCallbackContext* context = (LeaderboardCallbackContext*)contextPtr;
+    context->callback(leaderboard, context->managedCallbackId);
+    delete context;
 }
 
-struct LeaderboardEntry_bridge
+extern "C" EXPORT void LeaderboardGetLeaderboardWithName(const char* name, LeaderboardCallback_bridge callback, int callbackId)
 {
-    const char* userId;
-    const char* region;
-    float score;
-    int rank;
+    LeaderboardCallbackContext* context = new LeaderboardCallbackContext();
+    context->callback = callback;
+    context->managedCallbackId = callbackId;
+    Leaderboard::GetLeaderboard(name, OnLeaderboardLoaded, context);
+}
+
+extern "C" EXPORT void LeaderboardGetLeaderboardWithId(const char* id, LeaderboardCallback_bridge callback, int callbackId)
+{
+    LeaderboardCallbackContext* context = new LeaderboardCallbackContext();
+    context->callback = callback;
+    context->managedCallbackId = callbackId;
+    Leaderboard::GetLeaderboardWithId(id, OnLeaderboardLoaded, context);
+}
+
+typedef void (* LeaderboardsCallback_bridge)(const Leaderboard* leaderboardsPointer, int count, int callbackId);
+
+struct LeaderboardsCallbackContext
+{
+    LeaderboardsCallback_bridge callback;
+    int managedCallbackId;
 };
 
-struct Leaderboard_bridge
+static void OnLeaderboardsLoaded(const Leaderboard* leaderboards, int count, void* contextPtr)
 {
-    const char* id;
-    LeaderboardEntry* entries;
-    int numEntries;
+    LeaderboardsCallbackContext* context = (LeaderboardsCallbackContext*)contextPtr;
+    context->callback(leaderboards, count, context->managedCallbackId);
+    delete context;
+}
+
+extern "C" EXPORT void LeaderboardGetLeaderboards(LeaderboardsCallback_bridge callback, int callbackId)
+{
+    LeaderboardsCallbackContext* context = new LeaderboardsCallbackContext();
+    context->callback = callback;
+    context->managedCallbackId = callbackId;
+    Leaderboard::GetLeaderboards(OnLeaderboardsLoaded, context);
+}
+
+typedef void (* LeaderboardEntryCallback_bridge)(const Leaderboard* leaderboard, const LeaderboardEntry* entries, int count, int callbackId);
+
+struct LeaderboardEntryCallbackContext
+{
+    LeaderboardEntryCallback_bridge callback;
+    int managedCallbackId;
 };
 
-static Leaderboard_bridge* CreateLeaderboardBridge(Leaderboard* leaderboard)
+static void OnLeaderboardScoresLoaded(const Leaderboard* leaderboard, const LeaderboardEntry* entries, int count, void* contextPtr)
 {
-    Leaderboard_bridge* bridge = new Leaderboard_bridge();
-    bridge->entries = new LeaderboardEntry[leaderboard->entries.size()];
-    bridge->numEntries = leaderboard->entries.size();
-    bridge->id = leaderboard->id.c_str();
-    for (int i = 0; i < leaderboard->entries.size(); i++)
-    {
-        bridge->entries[i] = *leaderboard->entries[i];
-    }
-    return bridge;
+    LeaderboardEntryCallbackContext* context = (LeaderboardEntryCallbackContext*)contextPtr;
+    context->callback(leaderboard, entries, count, context->managedCallbackId);
+    delete context;
 }
 
-typedef void (* LeadeboardBrdigeCallback)(Leaderboard_bridge*);
-typedef void (* LeaderboardBridgeErrorCallback)(const char* leaderboardId, int statusCode);
-typedef void (* LeaderboardBrdigeValueUpdatedCallback)(const char* leaderboardId, float value);
-
-static LeadeboardBrdigeCallback s_LeaderboardBridgeLoaded = NULL;
-static void OnLeaderboardLoaded(Leaderboard* leaderboard)
+extern "C" EXPORT void LeaderboardGetScores(const Leaderboard* leaderboard, int index, int count, LeaderboardEntryCallback_bridge callback, int callbackId)
 {
-    if (!leaderboard || !s_LeaderboardBridgeLoaded)
-        return;
-    s_LeaderboardBridgeLoaded(CreateLeaderboardBridge(leaderboard));
+    LeaderboardEntryCallbackContext* context = new LeaderboardEntryCallbackContext();
+    context->callback = callback;
+    context->managedCallbackId = callbackId;
+    leaderboard->GetScores(index, count, OnLeaderboardScoresLoaded, context);
 }
 
-static LeaderboardBridgeErrorCallback s_LeaderboardBridgeError = NULL;
-static void OnLeaderboardError(const std::string& leaderboardId, int statusCode)
+extern "C" EXPORT void LeaderboardGetFriendsScores(const Leaderboard* leaderboard, int index, int count, LeaderboardEntryCallback_bridge callback, int callbackId)
 {
-    if (s_LeaderboardBridgeError)
-        s_LeaderboardBridgeError(leaderboardId.c_str(), statusCode);
+    LeaderboardEntryCallbackContext* context = new LeaderboardEntryCallbackContext();
+    context->callback = callback;
+    context->managedCallbackId = callbackId;
+    leaderboard->GetFriendsScores(index, count, OnLeaderboardScoresLoaded, context);
 }
 
-static LeaderboardBrdigeValueUpdatedCallback s_LeaderboardBridgeValueUpdated = NULL;
-static void OnLeaderboardValueUpdated(const std::string& leaderboardId, float value)
+typedef void (* LeaderboardPositionCallback_bridge)(const Leaderboard* leaderboard, int totalEntries, int position, int callbackId);
+
+struct LeaderboardPositionCallbackContext
 {
-    if (s_LeaderboardBridgeValueUpdated)
-        s_LeaderboardBridgeValueUpdated(leaderboardId.c_str(), value);
+    LeaderboardPositionCallback_bridge callback;
+    int managedCallbackId;
+};
+
+static void OnLeaderboardPositionLoaded(const Leaderboard* leaderboard, int totalEntries, int position, void* contextPtr)
+{
+    LeaderboardPositionCallbackContext* context = (LeaderboardPositionCallbackContext*)contextPtr;
+    context->callback(leaderboard, totalEntries, position, context->managedCallbackId);
+    delete context;
 }
 
-extern "C" EXPORT void LeaderboardsSetLeaderboardCallbacks(LeadeboardBrdigeCallback leaderboardLoadedCallback, LeaderboardPositionCallback positionCallback, LeaderboardBridgeErrorCallback leaderboardErrorCallback, LeaderboardBrdigeValueUpdatedCallback leaderboardValueUpdatedCallback)
+extern "C" EXPORT void LeaderboardGetPosition(const Leaderboard* leaderboard, LeaderboardPositionCallback_bridge callback, int callbackId)
 {
-    s_LeaderboardBridgeLoaded = leaderboardLoadedCallback;
-    s_LeaderboardBridgeError = leaderboardErrorCallback;
-    s_LeaderboardBridgeValueUpdated = leaderboardValueUpdatedCallback;
-    Leaderboards::SetLeaderboardCallbacks(OnLeaderboardLoaded, positionCallback, OnLeaderboardError, OnLeaderboardValueUpdated);
+    LeaderboardPositionCallbackContext* context = new LeaderboardPositionCallbackContext();
+    context->callback = callback;
+    context->managedCallbackId = callbackId;
+    leaderboard->GetPosition(OnLeaderboardPositionLoaded, context);
 }
 
-extern "C" EXPORT void LeaderboardsGetLeaderboardAsync(const char* leaderboardId, int startIndex, int endIndex)
+static LeaderboardValueUpdatedCallback s_LeaderboardValueUpdatedCallback = NULL;
+
+static void OnLeaderboardValueUpdated(const Leaderboard* leaderboard, float value)
 {
-    Leaderboards::GetLeaderboardAsync(leaderboardId, startIndex, endIndex);
+    if (s_LeaderboardValueUpdatedCallback)
+        s_LeaderboardValueUpdatedCallback(leaderboard, value);
 }
 
-extern "C" EXPORT void LeaderboardsGetFriendsLeaderboardAsync(const char* leaderboardId, int startIndex, int endIndex)
+extern "C" EXPORT void LeaderboardSetValueUpdatedCallback(LeaderboardValueUpdatedCallback callback)
 {
-    Leaderboards::GetFriendsLeaderboardAsync(leaderboardId, startIndex, endIndex);
+    s_LeaderboardValueUpdatedCallback = callback;
+    Leaderboard::SetValueUpdatedCallback(OnLeaderboardValueUpdated);
 }
 
-extern "C" EXPORT void LeaderboardsGetPositionInLeaderboardAsync(const char* leaderboardId)
+extern "C" EXPORT float LeaderboardGetValue(const Leaderboard* leaderboard)
 {
-    Leaderboards::GetPositionInLeaderboardAsync(leaderboardId);
+    return leaderboard->GetValue();
 }
 
-extern "C" EXPORT float LeaderboardsGetLeaderboardValue(const char* leaderboardId)
+extern "C" EXPORT const char* LeaderboardGetId(const Leaderboard * leaderboard)
 {
-    return Leaderboards::GetLeaderboardValue(leaderboardId);
+    return strdup(leaderboard->GetId().c_str());
+}
+
+extern "C" EXPORT const char* LeaderboardGetName(const Leaderboard * leaderboard)
+{
+    return strdup(leaderboard->GetName().c_str());
+}
+
+extern "C" EXPORT const char* LeaderboardGetDescription(const Leaderboard * leaderboard)
+{
+    return strdup(leaderboard->GetName().c_str());
 }

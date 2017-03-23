@@ -5,13 +5,14 @@
 
 namespace GameServices
 {
-    typedef void (* PlaySessionInitCallback)(bool success);
+    typedef void (*PlaySessionInitCallback)(bool success);
     class PlaySession
     {
+
     public:
-        /*NOWRAPPER*/
         static void Init(const std::string& upid, PlaySessionInitCallback callback);
-        /*NOWRAPPER*/
+        static void Init(const std::string& upid, std::string bakedAchievements, std::string bakedLeaderboards, PlaySessionInitCallback initCallback);
+        
         static void Cleanup();
 
         static void SendEvent(const std::map<std::string, float>& sessionEvent);
@@ -19,17 +20,17 @@ namespace GameServices
         static void SendEvent(const std::map<std::string, float>& sessionEvent, const std::vector<std::string>& tags);
         static void SendEvent(const std::string& key, float value, const std::vector<std::string>& tags);
 
-        /*NOWRAPPER*/
+        
         static void SendEvent(const std::map<std::string, float>& sessionEvent, const std::string& topic);
         static void SendEvent(const std::map<std::string, float>& sessionEvent, const std::string& topic, const std::vector<std::string>& tags);
-
-        /*NOWRAPPER*/
+        
+        
         static void FlushEvents();
 
         static void Begin();
         static void End();
         static void Cancel();
-
+        
         static void ActivateTag(const std::string& key);
         static void DeactivateTag(const std::string& key);
 

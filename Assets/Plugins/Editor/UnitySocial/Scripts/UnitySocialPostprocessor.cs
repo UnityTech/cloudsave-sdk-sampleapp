@@ -4,6 +4,7 @@ using System.IO;
 using UnityEditor;
 using UnityEditor.Callbacks;
 using UnityEngine;
+using UnitySocial.Internal;
 using UnitySocialEditor.xCode;
 
 namespace UnitySocial

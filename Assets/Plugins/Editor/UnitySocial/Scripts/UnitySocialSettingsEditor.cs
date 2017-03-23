@@ -3,14 +3,16 @@ using System.IO;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using UnitySocial.Internal;
 
 namespace UnitySocial
 {
     [CustomEditor(typeof(UnitySocialSettings))]
     public class UnitySocialSettingsEditor : Editor
     {
-        public const string s_SettingsFile = "UnitySocialSettings";
-        public const string s_SettingsFileExtension = ".asset";
+        private const decimal kMinimumRequirediOSVersion = 7.0m;
+        private const string kSettingsFile = "UnitySocialSettings";
+        private const string kSettingsFileExtension = ".asset";
 
         private static GUIContent s_LabelClientId = new GUIContent("Project ID");
         private static GUIContent s_LabelSupport_iOS = new GUIContent("iOS enabled [?]", "Check to enable Unity Social on iOS devices");
@@ -45,7 +47,7 @@ namespace UnitySocial
 
         public static UnitySocialSettings LoadSettings()
         {
-            return (UnitySocialSettings) Resources.Load(s_SettingsFile);
+            return (UnitySocialSettings) Resources.Load(kSettingsFile);
         }
 
         public override void OnInspectorGUI()
@@ -104,15 +106,7 @@ namespace UnitySocial
 
                         if (m_IOSSupportEnabled)
                         {
-                            iOSTargetOSVersion v = PlayerSettings.iOS.targetOSVersion;
-
-                            if (v == iOSTargetOSVersion.iOS_4_0 || v == iOSTargetOSVersion.iOS_4_1 || v == iOSTargetOSVersion.iOS_4_2 ||
-                                v == iOSTargetOSVersion.iOS_4_3 || v == iOSTargetOSVersion.iOS_5_0 || v == iOSTargetOSVersion.iOS_5_1 ||
-                                v == iOSTargetOSVersion.iOS_6_0 || v == iOSTargetOSVersion.Unknown)
-                            {
-                                PlayerSettings.iOS.targetOSVersion = iOSTargetOSVersion.iOS_7_0;
-                                Debug.Log("Unity Social requires minimum iOS 7.0. Target OS version updated to 7.0");
-                            }
+                            FixiOSVersion();
                         }
 
                         GameServicesEditor.BakeGameServicesData();
@@ -121,6 +115,7 @@ namespace UnitySocial
                     else if (m_AndroidSupportEnabled != m_CurrentSettings.androidSupportEnabled)
                     {
                         EnableAndroidSupport(m_AndroidSupportEnabled);
+                        UnitySocialAndroidDependencies.SetAndroidManifestConfig(m_CurrentSettings);
                         selectedPlatformsChanged = true;
                         m_CurrentSettings.androidSupportEnabled = m_AndroidSupportEnabled;
 
@@ -142,6 +137,11 @@ namespace UnitySocial
                     if (m_AndroidSupportEnabled)
                     {
                         AndroidPushNotificationSettings();
+
+                        if (GUILayout.Button("Force Import Android dependencies"))
+                        {
+                            UnitySocialAndroidDependencies.PlayServicesImport();
+                        }
                     }
 
                     if (validityChanged || selectedPlatformsChanged)
@@ -155,6 +155,27 @@ namespace UnitySocial
             catch (Exception)
             {
             }
+        }
+
+        private static void FixiOSVersion()
+        {
+            #if UNITY_5_3 || UNITY_5_4
+            iOSTargetOSVersion v = PlayerSettings.iOS.targetOSVersion;
+
+            if (v < iOSTargetOSVersion.iOS_7_0 || v == iOSTargetOSVersion.Unknown)
+            {
+                PlayerSettings.iOS.targetOSVersion = iOSTargetOSVersion.iOS_7_0;
+                Debug.Log("Unity Social requires minimum iOS 7.0. Target OS version updated to 7.0");
+            }
+            #else
+            decimal version;
+
+            if (!decimal.TryParse(PlayerSettings.iOS.targetOSVersionString, out version) || version < kMinimumRequirediOSVersion)
+            {
+                PlayerSettings.iOS.targetOSVersionString = kMinimumRequirediOSVersion.ToString();
+                Debug.Log(string.Format("Unity Social requires minimum iOS {0}. Target OS version updated to {0}", kMinimumRequirediOSVersion));
+            }
+            #endif
         }
 
         private static string TrimmedText(string txt)
@@ -177,7 +198,7 @@ namespace UnitySocial
                     AssetDatabase.CreateFolder("Assets/Plugins/UnitySocial", "Resources");
                 }
 
-                AssetDatabase.CreateAsset(everyplaySettings, "Assets/Plugins/UnitySocial/Resources/" + s_SettingsFile + s_SettingsFileExtension);
+                AssetDatabase.CreateAsset(everyplaySettings, "Assets/Plugins/UnitySocial/Resources/" + kSettingsFile + kSettingsFileExtension);
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
 
@@ -208,7 +229,7 @@ namespace UnitySocial
                 if (!string.IsNullOrEmpty(file) && File.Exists(file))
                 {
                     string fileContent = File.ReadAllText(file);
-                    var dict = UnitySocialTools.DictionaryExtensions.JsonToDictionary(fileContent);
+                    var dict = UnitySocial.Tools.DictionaryExtensions.JsonToDictionary(fileContent);
 
                     try
                     {
@@ -218,10 +239,16 @@ namespace UnitySocial
                         var androidClientInfo = clientInfo["android_client_info"] as Dictionary<string, object>;
                         var packageName = androidClientInfo["package_name"] as string;
 
-                        if (packageName != PlayerSettings.bundleIdentifier)
+                        #if UNITY_5_3 || UNITY_5_4 || UNITY_5_5
+                        var currentPackageName = PlayerSettings.bundleIdentifier;
+                        #else
+                        var currentPackageName = PlayerSettings.applicationIdentifier;
+                        #endif
+
+                        if (packageName != currentPackageName)
                         {
                             string msg = string.Format("Bundle name mismatch in {0} (Unity Project: {1} JSON: {2}). Ignoring.",
-                                    file, PlayerSettings.bundleIdentifier, packageName);
+                                    file, currentPackageName, packageName);
                             throw new NotSupportedException(msg);
                         }
 

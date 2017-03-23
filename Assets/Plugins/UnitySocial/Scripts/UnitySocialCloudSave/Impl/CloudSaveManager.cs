@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using UnitySocialCloudSave.Storage;
 using UnitySocialCloudSave.Utils;
 using UnitySocial;
+using UnitySocial.Entities;
 
 namespace UnitySocialCloudSave.Impl
 {

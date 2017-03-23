@@ -3,6 +3,7 @@ using UnityEngine;
 using UnitySocialCloudSave.Client;
 using UnitySocialCloudSave.Utils;
 using UnitySocial;
+using UnitySocial.Entities;
 
 namespace UnitySocialCloudSave.Storage
 {

@@ -1,9 +1,12 @@
-using System.Collections.Generic;
 using UnityEngine.Events;
-using UnitySocialInternal;
+using UnitySocial.Events;
+using UnitySocial.Internal;
 
 namespace UnitySocial
 {
+    /// <summary>
+    /// Social core
+    /// </summary>
     public partial class SocialCore
     {
         private static UnityEvent s_GameShouldPause = new UnityEvent();
@@ -75,29 +78,31 @@ namespace UnitySocial
             Initialize_Internal();
         }
 
+        /// <summary>
+        /// Set manifest server URL
+        /// </summary>
+        /// <param name="manifestServer">URL for manifest server</param>
         public static void SetManifestServer(string manifestServer)
         {
             UnitySocialBridge.UnitySocialSetManifestServer(manifestServer);
         }
 
+        /// <summary>
+        /// Add tags
+        /// </summary>
+        /// <param name="tags">Array of tags</param>
         public static void AddTags(params string[] tags)
         {
             AddTags_Internal(tags);
         }
 
+        /// <summary>
+        /// Remove tags
+        /// </summary>
+        /// <param name="tags">Array of tags</param>
         public static void RemoveTags(params string[] tags)
         {
             RemoveTags_Internal(tags);
         }
-
-        /// <summary>
-        /// <see cref="UnityEvent"/> callback for notfying that initialization has completed
-        /// </summary>
-        public class SocialCoreInitializedEvent : UnityEvent<bool> {}
-
-        /// <summary>
-        /// <see cref="UnityEvent"/> callback for notfying that reward has been claimed.
-        /// </summary>
-        public class SocialCoreRewardClaimedEvent : UnityEvent<Dictionary<string, object>> {}
     }
 }

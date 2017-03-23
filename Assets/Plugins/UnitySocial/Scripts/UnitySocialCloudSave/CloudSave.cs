@@ -12,7 +12,7 @@ namespace UnitySocialCloudSave
 
         static CloudSave()
         {
-            var credentialProvider = Identity.DefaultProvider();
+            var credentialProvider = Identity.defaultProvider;
             Manager = new CloudSaveManager(credentialProvider);
         }
 

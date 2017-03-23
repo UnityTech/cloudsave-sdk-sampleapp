@@ -3,7 +3,12 @@ using System.Collections;
 using System.Net;
 using System.Text;
 using UnityEngine;
+
+#if UNITY_5_3
+using UnityEngine.Experimental.Networking;
+#else
 using UnityEngine.Networking;
+#endif
 
 namespace UnitySocialCloudSave.Client
 {

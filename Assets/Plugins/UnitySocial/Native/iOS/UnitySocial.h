@@ -1,8 +1,8 @@
 /*
 *  UnitySocialSDK
 *
-*  Version: 0.3.0-rc.6
-*  Date: 2017-03-08T08:21:49Z
+*  Version: 0.4.0-rc.7 ($COMMIT)
+*  Date: 2017-03-23T10:51:46Z
 *  Copyright (c) 2017 Unity. All rights reserved.
 *
 */

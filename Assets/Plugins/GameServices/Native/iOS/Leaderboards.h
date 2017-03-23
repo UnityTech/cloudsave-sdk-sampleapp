@@ -1,43 +1,59 @@
 #pragma once
 #include <string>
 #include <vector>
-#include "GameServicesDefinition.h"
 
 namespace GameServices
 {
-    struct LeaderboardDefinition : GameServicesDefinition {};
-
     struct LeaderboardEntry
     {
-        std::string userId;
-        std::string region;
+        char userId[32];
+        char username[32];
+        char region[32];
         float score;
         int rank;
+        LeaderboardEntry()
+        {
+            userId[0] = 0;
+            region[0] = 0;
+            username[0] = 0;
+            score = 0;
+            rank = -1;
+        }
     };
 
-    struct Leaderboard
-    {
-        std::string id;
-        std::vector<LeaderboardEntry*> entries;
-        ~Leaderboard();
-    };
+    class Leaderboard;
+    class LeaderboardsPrivate;
+    
+    typedef void (*LeaderboardsCallback)(const Leaderboard* leaderboards, int count, void* context);
+    typedef void (*LeaderboardCallback)(const Leaderboard* leaderboard, void* context);
+    typedef void (*LeaderboardEntryCallback)(const Leaderboard* leaderboard, const LeaderboardEntry* entries, int count, void* context);
+    typedef void (*LeaderboardPositionCallback)(const Leaderboard* leaderboard, int totalEntries, int position, void* context);
+    typedef void (*LeaderboardValueUpdatedCallback)(const Leaderboard* leaderboard, float value);
 
-    typedef void (* LeaderboardCallback)(Leaderboard* leaderboard);
-    typedef void (* LeaderboardErrorCallback)(const std::string& leaderboardId, int statusCode);
-    typedef void (* LeaderboardPositionCallback)(int totalEntries, int position);
-    typedef void (* LeaderboardValueUpdatedCallback)(const std::string& leaderboardId, float value);
-
-    class Leaderboards
+    class Leaderboard
     {
     public:
+        static void GetLeaderboards(LeaderboardsCallback callback, void* context);
+        static void GetLeaderboard(const std::string& name, LeaderboardCallback callback, void* context);
+        static void GetLeaderboardWithId(const std::string& id, LeaderboardCallback callback, void* context);
+        void GetScores(int index, int count, LeaderboardEntryCallback callback, void* context) const;
+        void GetFriendsScores(int index, int count, LeaderboardEntryCallback callback, void* context) const;
+        void GetPosition(LeaderboardPositionCallback callback, void* context) const;
+        static void SetValueUpdatedCallback(LeaderboardValueUpdatedCallback callback);
+        float GetValue() const;
+        const std::string& GetId() const;
+        const std::string& GetName() const;
+        const std::string& GetDescription() const;
 
-        /*PROP*/
-        static int GetLeaderboardDefinitionsCount();
-        static LeaderboardDefinition* GetLeaderboardDefinition(int index);
-        static void SetLeaderboardCallbacks(LeaderboardCallback leaderboardLoadedCallback, LeaderboardPositionCallback positionCallback, LeaderboardErrorCallback leaderboardErrorCallback, LeaderboardValueUpdatedCallback leaderboardValueUpdatedCallback);
-        static void GetLeaderboardAsync(const std::string& leaderboardId, int startIndex, int endIndex);
-        static void GetFriendsLeaderboardAsync(const std::string& leaderboardId, int startIndex, int endIndex);
-        static void GetPositionInLeaderboardAsync(const std::string& leaderboardId);
-        static float GetLeaderboardValue(const std::string& leaderboardId);
+    private:
+        friend class LeaderboardsPrivate;
+        Leaderboard(const Leaderboard&);
+        Leaderboard& operator=(const Leaderboard&);
+        Leaderboard();
+        ~Leaderboard();
+        std::string m_Id;
+        std::string m_Name;
+        std::string m_PlatformId;
+        std::string m_Description;
     };
 }

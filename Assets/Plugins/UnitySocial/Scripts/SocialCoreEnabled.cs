@@ -1,6 +1,6 @@
 #if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR && UNITY_SOCIAL
 using Debug = UnityEngine.Debug;
-using UnitySocialInternal;
+using UnitySocial.Internal;
 
 namespace UnitySocial
 {
@@ -19,7 +19,7 @@ namespace UnitySocial
         {
             if (UnitySocialBridge.GetBridge() != null && tags != null && tags.Length > 0)
             {
-                UnitySocialBridge.UnitySocialAddTags(UnitySocialTools.Json.Serialize(tags));
+                UnitySocialBridge.UnitySocialAddTags(UnitySocial.Tools.Json.Serialize(tags));
             }
         }
 
@@ -27,7 +27,7 @@ namespace UnitySocial
         {
             if (UnitySocialBridge.GetBridge() != null && tags != null && tags.Length > 0)
             {
-                UnitySocialBridge.UnitySocialRemoveTags(UnitySocialTools.Json.Serialize(tags));
+                UnitySocialBridge.UnitySocialRemoveTags(UnitySocial.Tools.Json.Serialize(tags));
             }
         }
     }

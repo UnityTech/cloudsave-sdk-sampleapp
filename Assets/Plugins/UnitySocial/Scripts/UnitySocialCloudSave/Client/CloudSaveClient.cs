@@ -5,6 +5,7 @@ using UnitySocialCloudSave.Impl;
 using UnitySocialCloudSave.Utils;
 using Logger = UnitySocialCloudSave.Utils.Logger;
 using UnitySocial;
+using UnitySocial.Entities;
 
 namespace UnitySocialCloudSave.Client
 {

@@ -7,6 +7,7 @@ using UnitySocialCloudSave.Storage;
 using UnitySocialCloudSave.Utils;
 using Logger = UnitySocialCloudSave.Utils.Logger;
 using UnitySocial;
+using UnitySocial.Entities;
 
 namespace UnitySocialCloudSave
 {

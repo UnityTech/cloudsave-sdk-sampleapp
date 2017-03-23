@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using UnitySocial.Entities;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -16,9 +17,9 @@ namespace UnitySocial
         public int profileImageSize = 128;
         public SocialOverlay.NotificationLocation notificationLocation = SocialOverlay.NotificationLocation.LeftTop;
         public int notificationOffset = 0;
-        public Image entryPointIconImage;
-        public GameObject notificationBadge;
-        public Text notificationBadgeCountText;
+        public Image entryPointIconImage = null;
+        public GameObject notificationBadge = null;
+        public Text notificationBadgeCountText = null;
 
         #if UNITY_SOCIAL
         private Color m_EntryPointDefaultColor;
@@ -72,7 +73,7 @@ namespace UnitySocial
             HandleUnitySocialEntryPointStateUpdate(SocialOverlay.currentEntryPointState);
         }
 
-        private void HandleUnitySocialEntryPointStateUpdate(SocialOverlay.EntryPointState newState) //newState contains ImageURL for profile image && NotificationCount
+        private void HandleUnitySocialEntryPointStateUpdate(EntryPointState newState) //newState contains ImageURL for profile image && NotificationCount
         {
             m_NotificationCount = newState.notificationCount;
 

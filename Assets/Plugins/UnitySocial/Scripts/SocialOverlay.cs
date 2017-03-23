@@ -1,12 +1,16 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Events;
-using UnitySocialInternal;
-using UnitySocialTools;
+using UnitySocial.Entities;
+using UnitySocial.Events;
+using UnitySocial.Internal;
+using UnitySocial.Tools;
 
 namespace UnitySocial
 {
+    /// <summary>
+    /// Social overlay
+    /// </summary>
     public static class SocialOverlay
     {
         private static bool s_EntryPointUpdatesEnabled = false;
@@ -17,6 +21,9 @@ namespace UnitySocial
         private static bool s_UpdatingNotificationSettings = false;
         private static EntryPointStateUpdatedEvent s_EntryPointStateUpdated = new EntryPointStateUpdatedEvent();
 
+        /// <summary>
+        /// Notification actor location
+        /// </summary>
         public enum NotificationLocation { Hidden = 0, LeftTop, LeftBottom, RightTop, RightBottom };
 
         /// <summary>
@@ -34,11 +41,11 @@ namespace UnitySocial
                 string json = UnitySocialBridge.UnitySocialGetEntryPointState();
                 if (!string.IsNullOrEmpty(json))
                 {
-                    Dictionary<string, object> dict = UnitySocialTools.DictionaryExtensions.JsonToDictionary(json);
+                    Dictionary<string, object> dict = UnitySocial.Tools.DictionaryExtensions.JsonToDictionary(json);
                     EntryPointState newState = new EntryPointState();
 
-                    if (UnitySocialTools.DictionaryExtensions.TryGetValue(dict, "imageURL", out newState.imageURL) &&
-                        UnitySocialTools.DictionaryExtensions.TryGetValue(dict, "notificationCount", out newState.notificationCount))
+                    if (UnitySocial.Tools.DictionaryExtensions.TryGetValue(dict, "imageURL", out newState.imageURL) &&
+                        UnitySocial.Tools.DictionaryExtensions.TryGetValue(dict, "notificationCount", out newState.notificationCount))
                     {
                         return newState;
                     }
@@ -111,11 +118,18 @@ namespace UnitySocial
             }
         }
 
+        /// <summary>
+        /// EntryPointClicked
+        /// </summary>
         public static void EntryPointClicked()
         {
             UnitySocialBridge.UnitySocialEntryPointClicked();
         }
 
+        /// <summary>
+        /// Set color theme
+        /// </summary>
+        /// <param name="theme">Colors for theme</param>
         public static void SetColorTheme(Dictionary<string, string> theme)
         {
             UnitySocialBridge.UnitySocialSetColorTheme((theme != null) ?  DictionaryExtensions.DictionaryToJson(theme) : null);
@@ -188,19 +202,5 @@ namespace UnitySocial
 
             s_UpdatingNotificationSettings = false;
         }
-
-        /// <summary>
-        /// Class which represents entry point state
-        /// </summary>
-        public struct EntryPointState
-        {
-            public string imageURL;
-            public int notificationCount;
-        }
-
-        /// <summary>
-        /// <see cref="UnityEvent"/> callback for when entry point status is updated.
-        /// </summary>
-        public class EntryPointStateUpdatedEvent : UnityEvent<EntryPointState> {}
     }
 }
